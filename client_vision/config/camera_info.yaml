@@ -1,7 +1,7 @@
 ros__parameters:
     camera:
       height: 0.15      # 카메라 지면 높이 (m)
-      tilt_deg: 0.0     # 틸트각 (도) - 아래 방향 양수
+      tilt_deg: 0.0
 
     camera_matrix:
       data: [640.0, 0.0, 320.0,
