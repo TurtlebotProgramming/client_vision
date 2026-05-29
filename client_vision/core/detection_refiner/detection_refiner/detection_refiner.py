@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from client_vision_interfaces.msg import TurtlebotDetection
-from turtlebot_interfaces.msg import Vision2taskplanner
+from turtlebot_interfaces.msg import Refiner2taskplanner
 from ..util.util import calc_object_distance
 
 
@@ -17,7 +17,7 @@ class DetectionRefiner(Node):
             1
         )
         self.pub_ = self.create_publisher(
-            Vision2taskplanner,
+            Refiner2taskplanner,
             '/vision2taskplanner',
             1
         )
@@ -35,7 +35,7 @@ class DetectionRefiner(Node):
 
         pos = calc_object_distance(u, v)
 
-        out = Vision2taskplanner()
+        out = Refiner2taskplanner()
         out.object_dist  = float(pos.dist)
         out.object_theta = float(pos.theta)
         self.pub_.publish(out)

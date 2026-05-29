@@ -11,6 +11,22 @@ from ament_index_python.packages import get_package_share_directory
 from client_vision_interfaces.msg import TurtlebotDetection
 import numpy as np
 
+_CLASS_COLORS = {
+    0: (255,  56,  56),   # 빨강
+    1: ( 51, 255, 102),   # 초록
+    2: ( 51, 153, 255),   # 파랑
+}
+
+_CLASS_THRESHOLDS = {
+    0: 0.5,
+    1: 0.5,
+    2: 0.5,
+}
+
+def _class_color(cls: int) -> tuple:
+    return _CLASS_COLORS.get(cls, (200, 200, 200))
+
+
 class ClientVision(Node):
     def __init__(self):
         super().__init__('client_vision_subscriber')
@@ -76,20 +92,31 @@ class ClientVision(Node):
 
             msg = TurtlebotDetection()
             boxes = results[0].boxes
+            names = results[0].names
             if boxes is not None:
+                # 클래스별 최고 confidence 박스만 추출
+                best: dict[int, tuple] = {}
                 for box in boxes:
                     x1, y1, x2, y2 = (int(v) for v in box.xyxy[0].tolist())
                     cls   = int(box.cls[0])
                     score = float(box.conf[0])
+                    if score < _CLASS_THRESHOLDS.get(cls, 0.5):
+                        continue
+                    if cls not in best or score > best[cls][4]:
+                        best[cls] = (x1, y1, x2, y2, score)
+
+                for cls, (x1, y1, x2, y2, score) in best.items():
                     msg.class_ids.append(cls)
                     msg.score.append(score)
                     msg.x1.append(x1)
                     msg.y1.append(y1)
                     msg.x2.append(x2)
                     msg.y2.append(y2)
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(frame, f'{cls} {score:.2f}', (x1, y1 - 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    color = _class_color(cls)
+                    label = f'{names.get(cls, cls)} {score:.2f}'
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame, label, (x1, y1 - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
             self.yolo_pub_.publish(msg)
 
             cv2.imshow('YOLO Detection', frame)
