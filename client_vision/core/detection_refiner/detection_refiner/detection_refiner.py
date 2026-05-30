@@ -38,6 +38,8 @@ class DetectionRefiner(Node):
         out = Refiner2taskplanner()
         out.object_dist  = float(pos.dist)
         out.object_theta = float(pos.theta)
+        out.object_x = float(pos.x)
+        out.object_y = float(pos.y)
         self.pub_.publish(out)
 
         self.get_logger().debug(
